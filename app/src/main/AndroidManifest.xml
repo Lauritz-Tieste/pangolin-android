@@ -82,6 +82,15 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".intent.PangolinVpnReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="net.pangolin.Pangolin.CONNECT_VPN" />
+                <action android:name="net.pangolin.Pangolin.DISCONNECT_VPN" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
