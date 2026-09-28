@@ -131,6 +131,29 @@ class AccountManager private constructor(private val context: Context) {
         save()
     }
 
+    /**
+     * The resource ID of userId's selected exit node, or null if none is selected or the
+     * account doesn't exist.
+     */
+    fun getExitNode(userId: String): Int? {
+        return _store.value.accounts[userId]?.exitNodeResourceId
+    }
+
+    /** Records the selected exit node (a gateway resource) for userId; a null resourceId clears it. */
+    fun setExitNode(userId: String, resourceId: Int?) {
+        val currentStore = _store.value
+        val account = currentStore.accounts[userId]
+
+        if (account != null) {
+            val updatedAccount = account.copy(exitNodeResourceId = resourceId)
+            val updatedAccounts = currentStore.accounts.toMutableMap()
+            updatedAccounts[userId] = updatedAccount
+
+            _store.value = currentStore.copy(accounts = updatedAccounts)
+            save()
+        }
+    }
+
     fun updateAccountUserInfo(userId: String, username: String?, name: String?) {
         val currentStore = _store.value
         val account = currentStore.accounts[userId]

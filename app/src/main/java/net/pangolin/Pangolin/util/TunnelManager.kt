@@ -76,8 +76,10 @@ class TunnelManager private constructor(
 
     private val _exitNodeList = MutableStateFlow(ExitNodeList(null, emptyList()))
 
-    // The exit node saved in the config (org, niceId), applied on the next connect
-    private val _savedExitNode = MutableStateFlow(configManager.getExitNode())
+    // The exit node saved on the active account (resource ID), applied on the next connect
+    private val _savedExitNode = MutableStateFlow(
+        accountManager.activeAccount?.let { accountManager.getExitNode(it.userId) }
+    )
 
     /**
      * The exit nodes available in the current org (empty when there are none) and the selected
@@ -97,13 +99,7 @@ class TunnelManager private constructor(
         val activeId = if (live) {
             if (status?.gatewayActive == true) status.gatewaySiteResourceId else null
         } else {
-            saved?.let { (savedOrgId, savedNiceId) ->
-                if (savedOrgId == null || savedOrgId == orgId) {
-                    nodes.firstOrNull { it.niceId == savedNiceId }?.siteResourceId
-                } else {
-                    null
-                }
-            }
+            saved?.let { savedResourceId -> nodes.firstOrNull { it.siteResourceId == savedResourceId }?.siteResourceId }
         }
         ExitNodeUiState(nodes, activeId)
     }.stateIn(scope, SharingStarted.Eagerly, ExitNodeUiState(emptyList(), null))
@@ -457,7 +453,8 @@ class TunnelManager private constructor(
      * Returns an error message to show the user, or null on success.
      */
     suspend fun selectExitNode(node: SiteResource): String? {
-        val orgId = authManager.currentOrg.value?.orgId ?: return "No organization selected"
+        authManager.currentOrg.value?.orgId ?: return "No organization selected"
+        val userId = accountManager.activeUserId
 
         if (isTunnelLive()) {
             try {
@@ -468,8 +465,8 @@ class TunnelManager private constructor(
             }
         }
 
-        configManager.setExitNode(orgId, node.niceId)
-        _savedExitNode.value = configManager.getExitNode()
+        accountManager.setExitNode(userId, node.siteResourceId)
+        _savedExitNode.value = accountManager.getExitNode(userId)
         return null
     }
 
@@ -487,26 +484,23 @@ class TunnelManager private constructor(
             }
         }
 
-        configManager.setExitNode(null, null)
-        _savedExitNode.value = configManager.getExitNode()
+        val userId = accountManager.activeUserId
+        accountManager.setExitNode(userId, null)
+        _savedExitNode.value = accountManager.getExitNode(userId)
         return null
     }
 
     /**
      * Turns the saved exit node into the resource and site IDs to establish when connecting, or
-     * null to connect without one. Only the niceId is saved, so a deleted, disabled or site-less
-     * resource is skipped.
+     * null to connect without one. Only the resource ID is saved (scoped to the account's org),
+     * so a deleted, disabled or site-less resource is skipped.
      */
     private suspend fun resolveSavedExitNode(orgId: String): SiteResource? {
-        val (savedOrgId, savedNiceId) = configManager.getExitNode() ?: return null
-        if (savedOrgId != null && savedOrgId != orgId) {
-            Log.i(tag, "Saved exit node belongs to a different organization; not using it")
-            return null
-        }
+        val savedResourceId = accountManager.getExitNode(accountManager.activeUserId) ?: return null
 
         return try {
             val gateway = authManager.apiClient.listGatewayResources(orgId)
-                .firstOrNull { it.niceId == savedNiceId }
+                .firstOrNull { it.siteResourceId == savedResourceId }
             if (gateway == null) {
                 Log.w(tag, "Saved exit node no longer exists or is disabled; not using it")
             }

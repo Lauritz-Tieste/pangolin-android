@@ -26,7 +26,13 @@ data class Account(
     val email: String,
     var orgId: String,
     var username: String? = null,
-    var name: String? = null
+    var name: String? = null,
+    // The exit node (a gateway-mode site resource) selected for this account, re-applied on
+    // the next connect. It can differ per account, so it's stored here rather than in
+    // ConfigManager, and it belongs to the account's currently selected org (orgId above). Only
+    // the resource ID is stored (not the niceId, which can be renamed); its sites are looked up
+    // from the server on every connect so they can't go stale.
+    var exitNodeResourceId: Int? = null
 )
 
 @Serializable
