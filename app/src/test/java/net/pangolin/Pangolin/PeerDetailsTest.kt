@@ -35,7 +35,7 @@ class PeerDetailsTest {
         assertEquals("Off", gatewayLabel(status()))
         assertEquals("Off", gatewayLabel(SocketStatusResponse(connected = true, terminated = false, gatewayActive = false, gatewaySiteResourceId = 12)))
         assertEquals(
-            "Active (resource 12)",
+            "Active",
             gatewayLabel(SocketStatusResponse(connected = true, terminated = false, gatewayActive = true, gatewaySiteResourceId = 12))
         )
         assertEquals("Active", gatewayLabel(SocketStatusResponse(connected = true, terminated = false, gatewayActive = true)))
