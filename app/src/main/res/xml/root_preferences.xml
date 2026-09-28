@@ -41,6 +41,12 @@
             android:summary="Maximum Transmission Unit size in bytes (576–65535). Default: 1280"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            android:key="exitNodeTakesPrecedence"
+            android:summary="When enabled, routes for individual resources are not added to the system and their aliases are not resolved, so all traffic is sent through the exit node instead of directly to resources. Exit node (gateway) routes are unaffected."
+            android:title="Exit Node Takes Precedence Over Resources"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 

@@ -34,6 +34,11 @@ public class TunnelConfig {
     private final List<String> upstreamDNS;
     private final boolean overrideDNS;
     private final boolean tunnelDNS;
+    // When true, routes for individual resources are not added to the routing
+    // table and their aliases are not resolved, so all traffic is sent through
+    // the exit node instead of directly to resources. Exit node (gateway)
+    // routes are unaffected. Matches olm's TunnelConfig.DisableRoutesAndAliasesOnExitNode.
+    private final boolean exitNodeTakesPrecedence;
     private final Map<String, Object> fingerprint;
     private final Map<String, Object> postures;
     // The exit node (gateway site resource) to establish as the tunnel comes up; 0 / empty for none.
@@ -54,6 +59,7 @@ public class TunnelConfig {
         this.upstreamDNS = builder.upstreamDNS;
         this.overrideDNS = builder.overrideDNS;
         this.tunnelDNS = builder.tunnelDNS;
+        this.exitNodeTakesPrecedence = builder.exitNodeTakesPrecedence;
         this.fingerprint = builder.fingerprint;
         this.postures = builder.postures;
         this.gatewaySiteResourceId = builder.gatewaySiteResourceId;
@@ -93,6 +99,7 @@ public class TunnelConfig {
         
         json.put("overrideDNS", overrideDNS);
         json.put("tunnelDNS", tunnelDNS);
+        json.put("exitNodeTakesPrecedence", exitNodeTakesPrecedence);
 
         json.put("fingerprint", new JSONObject(fingerprint));
         json.put("postures", new JSONObject(postures));
@@ -163,6 +170,10 @@ public class TunnelConfig {
         return tunnelDNS;
     }
 
+    public boolean isExitNodeTakesPrecedence() {
+        return exitNodeTakesPrecedence;
+    }
+
     public int getGatewaySiteResourceId() {
         return gatewaySiteResourceId;
     }
@@ -187,6 +198,7 @@ public class TunnelConfig {
                 ", upstreamDNS=" + upstreamDNS +
                 ", overrideDNS=" + overrideDNS +
                 ", tunnelDNS=" + tunnelDNS +
+                ", exitNodeTakesPrecedence=" + exitNodeTakesPrecedence +
                 ", fingerprint=" + fingerprint +
                 ", postures=" + postures +
                 ", gatewaySiteResourceId=" + gatewaySiteResourceId +
@@ -211,6 +223,7 @@ public class TunnelConfig {
         private List<String> upstreamDNS = new ArrayList<>();
         private boolean overrideDNS = false;
         private boolean tunnelDNS = false;
+        private boolean exitNodeTakesPrecedence = false;
         private Map<String, Object> fingerprint = new HashMap<>();
         private Map<String, Object> postures = new HashMap<>();
         private int gatewaySiteResourceId = 0;
@@ -283,6 +296,11 @@ public class TunnelConfig {
 
         public Builder setTunnelDNS(boolean tunnelDNS) {
             this.tunnelDNS = tunnelDNS;
+            return this;
+        }
+
+        public Builder setExitNodeTakesPrecedence(boolean exitNodeTakesPrecedence) {
+            this.exitNodeTakesPrecedence = exitNodeTakesPrecedence;
             return this;
         }
 

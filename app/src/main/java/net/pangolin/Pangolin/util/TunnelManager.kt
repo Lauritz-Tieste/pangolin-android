@@ -285,6 +285,7 @@ class TunnelManager private constructor(
             val tunnelDns = config.dnsTunnelEnabled ?: false
             val logCollectionEnabled = config.logCollectionEnabled ?: false
             val mtu = config.mtu ?: 1280
+            val exitNodeTakesPrecedence = config.exitNodeTakesPrecedence ?: false
 
             Log.d(tag, "DNS Configuration - overrideDns: $overrideDns, tunnelDns: $tunnelDns, primaryDNS: $primaryDNS, secondaryDNS: $secondaryDNS")
             Log.d(tag, "Log collection enabled: $logCollectionEnabled")
@@ -337,6 +338,7 @@ class TunnelManager private constructor(
                     .setHolepunch(true)
                     .setOverrideDNS(overrideDns)
                     .setTunnelDNS(tunnelDns)
+                    .setExitNodeTakesPrecedence(exitNodeTakesPrecedence)
                     .setFingerprint(initialFingerprint.toMap())
                     .setPostures(initialPostures.toMap())
                     .setGateway(savedGateway?.siteResourceId ?: 0, savedGateway?.siteIds ?: emptyList())
