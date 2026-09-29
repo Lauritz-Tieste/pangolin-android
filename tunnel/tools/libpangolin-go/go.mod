@@ -3,8 +3,8 @@ module github.com/fosrl/android
 go 1.26.0
 
 require (
-	github.com/fosrl/newt v1.17.0
-	github.com/fosrl/olm v1.9.1
+	github.com/fosrl/newt v1.18.0
+	github.com/fosrl/olm v1.10.0
 	golang.org/x/sys v0.48.0
 )
 
@@ -36,6 +36,6 @@ require (
 )
 
 // To be used ONLY for local development
-replace github.com/fosrl/olm => /home/owen/fossorial/olm
+// replace github.com/fosrl/olm => /home/owen/fossorial/olm
 
-replace github.com/fosrl/newt => /home/owen/fossorial/newt
+// replace github.com/fosrl/newt => /home/owen/fossorial/newt
