@@ -96,7 +96,7 @@
             android:name=".tile.PangolinTileService"
             android:exported="true"
             android:icon="@drawable/ic_tile"
-            android:label="Pangolin"
+            android:label="Connect Pangolin"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
