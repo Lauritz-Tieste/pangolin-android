@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-android {   
+android {
     namespace = "net.pangolin.Pangolin"
     compileSdk = 36
 
