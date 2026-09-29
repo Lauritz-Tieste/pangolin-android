@@ -2,6 +2,7 @@ package net.pangolin.Pangolin
 
 import net.pangolin.Pangolin.util.ExitNode
 import net.pangolin.Pangolin.util.PANGOLIN_SERVER_PEER_KEY
+import net.pangolin.Pangolin.util.SiteResource
 import net.pangolin.Pangolin.util.SocketPeer
 import net.pangolin.Pangolin.util.SocketStatusResponse
 import net.pangolin.Pangolin.util.connectionLabel
@@ -31,14 +32,15 @@ class PeerDetailsTest {
     )
 
     @Test
-    fun gatewayLabelMatchesCliAndWindows() {
+    fun gatewayLabelMatchesWindowsAndApple() {
         assertEquals("Off", gatewayLabel(status()))
         assertEquals("Off", gatewayLabel(SocketStatusResponse(connected = true, terminated = false, gatewayActive = false, gatewaySiteResourceId = 12)))
-        assertEquals(
-            "Active",
-            gatewayLabel(SocketStatusResponse(connected = true, terminated = false, gatewayActive = true, gatewaySiteResourceId = 12))
-        )
-        assertEquals("Active", gatewayLabel(SocketStatusResponse(connected = true, terminated = false, gatewayActive = true)))
+        val active = SocketStatusResponse(connected = true, terminated = false, gatewayActive = true, gatewaySiteResourceId = 12)
+        val home = SiteResource(siteResourceId = 12, niceId = "home", name = "Home", mode = "gateway", enabled = true)
+        assertEquals("Active (Home)", gatewayLabel(active, listOf(home)))
+        // The name isn't known until the exit node list loads
+        assertEquals("Active", gatewayLabel(active))
+        assertEquals("Active", gatewayLabel(SocketStatusResponse(connected = true, terminated = false, gatewayActive = true), listOf(home)))
     }
 
     @Test

@@ -20,7 +20,9 @@ import kotlinx.coroutines.launch
 import net.pangolin.Pangolin.MainActivity
 import net.pangolin.Pangolin.R
 import net.pangolin.Pangolin.util.PANGOLIN_SERVER_PEER_KEY
+import net.pangolin.Pangolin.util.SiteResource
 import net.pangolin.Pangolin.util.SocketStatusResponse
+import net.pangolin.Pangolin.util.TunnelManager
 import net.pangolin.Pangolin.util.gatewayLabel
 import net.pangolin.Pangolin.util.peerDetails
 import net.pangolin.Pangolin.util.relativeTime
@@ -42,6 +44,10 @@ class StatusFormattedFragment : Fragment() {
     private var statusIndicator: View? = null
     private var organizationValue: TextView? = null
     private var gatewayValue: TextView? = null
+    private var gatewayRow: View? = null
+    private var gatewayDivider: View? = null
+    /** The org's exit nodes, used to name the active one. */
+    private var exitNodes: List<SiteResource> = emptyList()
     private var peersContainer: LinearLayout? = null
     private var noPeersMessage: TextView? = null
 
@@ -73,6 +79,8 @@ class StatusFormattedFragment : Fragment() {
         statusIndicator = view.findViewById(R.id.statusIndicator)
         organizationValue = view.findViewById(R.id.organizationValue)
         gatewayValue = view.findViewById(R.id.gatewayValue)
+        gatewayRow = view.findViewById(R.id.gatewayRow)
+        gatewayDivider = view.findViewById(R.id.divider4)
         peersContainer = view.findViewById(R.id.peersContainer)
         noPeersMessage = view.findViewById(R.id.noPeersMessage)
         
@@ -94,6 +102,16 @@ class StatusFormattedFragment : Fragment() {
                 newDrawable.shape = GradientDrawable.OVAL
                 newDrawable.setColor(Color.parseColor("#9E9E9E"))
                 indicator.background = newDrawable
+            }
+        }
+
+        // Follow the exit node list so the active one is shown by name once it loads
+        TunnelManager.getInstance()?.let { tunnelManager ->
+            viewLifecycleOwner.lifecycleScope.launch {
+                tunnelManager.exitNodeState.collect { state ->
+                    exitNodes = state.nodes
+                    lastStatus?.let { updateGateway(it) }
+                }
             }
         }
 
@@ -142,6 +160,8 @@ class StatusFormattedFragment : Fragment() {
         statusIndicator = null
         organizationValue = null
         gatewayValue = null
+        gatewayRow = null
+        gatewayDivider = null
         peersContainer = null
         noPeersMessage = null
     }
@@ -170,8 +190,7 @@ class StatusFormattedFragment : Fragment() {
         // Update organization
         organizationValue?.text = status.orgId ?: "—"
 
-        // Update gateway (exit node)
-        gatewayValue?.text = gatewayLabel(status)
+        updateGateway(status)
 
         // Update peers
         updatePeers(status)
@@ -397,6 +416,14 @@ class StatusFormattedFragment : Fragment() {
         })
 
         container.addView(row)
+    }
+
+    /** Shows the exit node row, with the active exit node's name, only while one is active. */
+    private fun updateGateway(status: SocketStatusResponse) {
+        val active = status.gatewayActive == true
+        gatewayRow?.visibility = if (active) View.VISIBLE else View.GONE
+        gatewayDivider?.visibility = if (active) View.VISIBLE else View.GONE
+        gatewayValue?.text = gatewayLabel(status, exitNodes)
     }
 
     /**

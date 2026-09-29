@@ -11,6 +11,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -509,15 +513,20 @@ class MainActivity : BaseNavigationActivity() {
 
     /**
      * Shows the exit node section under the organization when the org has exit nodes, with the
-     * selected one's name (or "None"). Hidden when there are none or the session expired.
+     * selected one's name (or "None"). Hidden when there are none or the session expired. It also
+     * stays up while there's an active selection whose name list hasn't loaded yet, showing "…",
+     * so it doesn't disappear and reappear.
      */
     private fun updateExitNodeSection() {
         val state = tunnelManager.exitNodeState.value
         val hasOrg = authManager.currentOrg.value != null
-        val show = hasOrg && !authManager.sessionExpired.value && state.nodes.isNotEmpty()
+        val show = hasOrg && !authManager.sessionExpired.value &&
+            (state.nodes.isNotEmpty() || state.activeId != null)
         contentBinding.exitNodeSection.visibility = if (show) View.VISIBLE else View.GONE
-        contentBinding.tvExitNodeName.text =
-            state.nodes.firstOrNull { it.siteResourceId == state.activeId }?.name ?: "None"
+        contentBinding.tvExitNodeName.text = when (val activeId = state.activeId) {
+            null -> "None"
+            else -> state.nodes.firstOrNull { it.siteResourceId == activeId }?.name ?: "…"
+        }
     }
 
     private fun updateErrorMessage() {
@@ -858,8 +867,23 @@ class MainActivity : BaseNavigationActivity() {
             return
         }
 
-        // "None" first, then each exit node
-        val names = (listOf("None") + nodes.map { it.name }).toTypedArray()
+        // "None" first, then each exit node with the sites it routes through beneath its name
+        val secondaryColor = MaterialColors.getColor(
+            this, com.google.android.material.R.attr.colorOnSurfaceVariant, android.graphics.Color.GRAY
+        )
+        val names = (listOf<CharSequence>("None") + nodes.map { node ->
+            val siteNames = node.siteNames.orEmpty()
+            if (siteNames.isEmpty()) {
+                node.name
+            } else {
+                SpannableStringBuilder(node.name).append('\n').apply {
+                    val start = length
+                    append(siteNames.joinToString(", "))
+                    setSpan(RelativeSizeSpan(0.85f), start, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    setSpan(ForegroundColorSpan(secondaryColor), start, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+            }
+        }).toTypedArray()
         val activeIndex = nodes.indexOfFirst { it.siteResourceId == state.activeId }
         val checkedItem = if (activeIndex >= 0) activeIndex + 1 else 0
 
@@ -867,7 +891,7 @@ class MainActivity : BaseNavigationActivity() {
         icon?.setTint(ContextCompat.getColor(this, R.color.pangolin_primary))
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Select Exit Node")
+            .setTitle("Route All Traffic Through")
             .setIcon(icon)
             .setSingleChoiceItems(names, checkedItem) { dialog, which ->
                 if (which != checkedItem) {

@@ -52,13 +52,13 @@ fun peerDetails(status: SocketStatusResponse, key: String): PeerDetails? {
 }
 
 /**
- * Summarizes the exit node (gateway) the same way the CLI and Windows status do: "Off", or
- * "Active" with the gateway site resource's ID.
+ * Summarizes the exit node (gateway) the same way the Windows and Apple status do: "Off", or
+ * "Active" followed by the exit node's name in parentheses when it is among [exitNodes].
  */
-fun gatewayLabel(status: SocketStatusResponse): String {
+fun gatewayLabel(status: SocketStatusResponse, exitNodes: List<SiteResource> = emptyList()): String {
     if (status.gatewayActive != true) return "Off"
-    val resourceId = status.gatewaySiteResourceId ?: 0
-    return if (resourceId != 0) "Active" else "Active"
+    val name = exitNodes.firstOrNull { it.siteResourceId == status.gatewaySiteResourceId }?.name
+    return if (name != null) "Active ($name)" else "Active"
 }
 
 /** "Local", "Relay" or "Direct". Local and relay are mutually exclusive; neither means direct. */
