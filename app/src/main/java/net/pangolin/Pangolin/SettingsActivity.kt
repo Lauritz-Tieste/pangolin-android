@@ -2,9 +2,15 @@
 package net.pangolin.Pangolin
 
 import android.Manifest
+import android.app.AppOpsManager
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.os.Process
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -12,8 +18,10 @@ import android.view.ViewGroup
 import android.text.method.DigitsKeyListener
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -57,7 +65,10 @@ class SettingsActivity : BaseNavigationActivity() {
                 Toast.makeText(requireContext(), R.string.vpn_notification_permission_denied, Toast.LENGTH_LONG).show()
             }
         }
-        
+        private val vpnPrepareLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
@@ -96,7 +107,10 @@ class SettingsActivity : BaseNavigationActivity() {
 
             // Setup DNS settings dependencies
             setupDnsSettingsDependencies()
-            
+
+            // Setup app-based activation settings
+            setupAppTriggerSettings()
+
             // Observe tunnel state and disable settings when tunnel is active
             lifecycleScope.launch {
                 val tunnelManager = TunnelManager.getInstance()
@@ -155,6 +169,85 @@ class SettingsActivity : BaseNavigationActivity() {
             updateDnsSettings()
         }
         
+        private fun setupAppTriggerSettings() {
+            findPreference<SwitchPreferenceCompat>("appTriggerEnabled")?.setOnPreferenceChangeListener { _, value ->
+                if (value == true) {
+                    // Authorize the VPN once so the background auto-connect can start the tunnel
+                    // without an interactive flow. A reinstall resets this authorization.
+                    val prepareIntent = VpnService.prepare(requireContext())
+                    if (prepareIntent != null) {
+                        vpnPrepareLauncher.launch(prepareIntent)
+                    }
+                }
+                true
+            }
+
+            val apps = loadLaunchableApps()
+            val labelByPackage = apps.associate { it.first to it.second }
+
+            val multiSelect = findPreference<MultiSelectListPreference>("appTriggerPackages")
+            multiSelect?.apply {
+                entryValues = apps.map { it.first }.toTypedArray()
+                entries = apps.map { it.second }.toTypedArray()
+                summaryProvider = Preference.SummaryProvider<MultiSelectListPreference> { pref ->
+                    val selected = pref.values ?: emptySet()
+                    if (selected.isEmpty()) {
+                        getString(R.string.app_trigger_no_apps)
+                    } else {
+                        val shown = selected.take(3).joinToString(", ") { labelByPackage[it] ?: it }
+                        if (selected.size > 3) "$shown +${selected.size - 3}" else shown
+                    }
+                }
+            }
+
+            findPreference<Preference>("appTriggerUsageAccess")?.setOnPreferenceClickListener {
+                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                startActivity(intent)
+                true
+            }
+            refreshUsageAccessPreference()
+        }
+        
+        private fun loadLaunchableApps(): List<Pair<String, String>> {
+            return runCatching {
+                val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                requireContext().packageManager.queryIntentActivities(intent, 0)
+                    .map { it.activityInfo.packageName to it.loadLabel(requireContext().packageManager).toString() }
+                    .distinctBy { it.first }
+                    .sortedBy { it.second.lowercase() }
+            }.getOrDefault(emptyList())
+        }
+        
+        @Suppress("DEPRECATION")
+        private fun hasUsageAccessPermission(): Boolean {
+            val appOps = requireContext().getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                appOps.unsafeCheckOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    Process.myUid(),
+                    requireContext().packageName,
+                )
+            } else {
+                appOps.checkOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    Process.myUid(),
+                    requireContext().packageName,
+                )
+            }
+            return mode == AppOpsManager.MODE_ALLOWED
+        }
+        
+        private fun refreshUsageAccessPreference() {
+            findPreference<Preference>("appTriggerUsageAccess")?.isVisible = !hasUsageAccessPermission()
+        }
+
+        override fun onResume() {
+            super.onResume()
+            refreshUsageAccessPreference()
+            // The user may have just granted/revoked usage access in the system settings.
+            (requireActivity().application as PangolinApplication).runtime.appTriggerMonitor.refresh()
+        }
+
         private fun updateLockInfo() {
             val infoPreference = findPreference<Preference>("tunnel_lock_info")
             infoPreference?.apply {

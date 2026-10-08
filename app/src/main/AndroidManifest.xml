@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="AppOps,ProtectedPermissions" />
+    <uses-permission
         android:name="android.permission.SYSTEM_ALERT_WINDOW"
         android:minSdkVersion="34" />
     <uses-permission
@@ -109,5 +112,12 @@
                 android:value="true" />
         </service>
     </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
 </manifest>

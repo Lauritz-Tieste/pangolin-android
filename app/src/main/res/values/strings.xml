@@ -7,6 +7,15 @@
     <string name="persistent_vpn_notification_summary">Keep a status notification while connected. A temporary notification may still appear when connecting or recovering. Android’s own VPN indicators are unaffected.</string>
     <string name="vpn_notification_permission_denied">Allow notifications for Pangolin in Android settings to show VPN status.</string>
 
+    <!-- App-based activation -->
+    <string name="app_trigger_enabled_title">Enable App-based Activation</string>
+    <string name="app_trigger_enabled_summary">Connect the tunnel while a selected app is open and disconnect when it closes, unless the tunnel was already running.</string>
+    <string name="app_trigger_packages_title">Trigger Apps</string>
+    <string name="app_trigger_packages_summary">Opening any selected app activates the tunnel.</string>
+    <string name="app_trigger_usage_access_title">Grant Usage Access</string>
+    <string name="app_trigger_usage_access_summary">Pangolin needs usage access to detect which app is in the foreground.</string>
+    <string name="app_trigger_no_apps">No trigger apps selected</string>
+
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

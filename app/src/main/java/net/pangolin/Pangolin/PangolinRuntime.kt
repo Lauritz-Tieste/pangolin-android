@@ -19,6 +19,7 @@ import net.pangolin.Pangolin.PacketTunnel.GoBackend
 import net.pangolin.Pangolin.util.APIClient
 import net.pangolin.Pangolin.util.AccountManager
 import net.pangolin.Pangolin.util.AndroidFingerprintCollector
+import net.pangolin.Pangolin.util.AppTriggerMonitor
 import net.pangolin.Pangolin.util.AuthManager
 import net.pangolin.Pangolin.util.ConfigManager
 import net.pangolin.Pangolin.util.FingerprintManager
@@ -183,8 +184,10 @@ class PangolinRuntime(private val context: Context) {
         socketManager = socketManager,
         fingerprintManager = fingerprintManager,
     )
+    val appTriggerMonitor = AppTriggerMonitor(context, tunnelManager, configManager)
 
     init {
+        appTriggerMonitor.start()
         // Apply the saved choice before a system-started service is created, and
         // update a running service without reconnecting when the preference changes.
         GoBackend.setPersistentNotificationEnabled(configManager.config.value.persistentVpnNotification)

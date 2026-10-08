@@ -14,7 +14,11 @@ data class Config(
     val logCollectionEnabled: Boolean? = null,
     val mtu: Int? = null,
     val persistentVpnNotification: Boolean = false,
-    val exitNodeTakesPrecedence: Boolean? = null
+    val exitNodeTakesPrecedence: Boolean? = null,
+    // App-based tunnel activation: connect when one of these apps is in the foreground,
+    // disconnect when it is closed (only when the tunnel was not already up beforehand).
+    val appTriggerEnabled: Boolean = false,
+    val appTriggerPackages: Set<String> = emptySet()
 )
 
 // MARK: - Account Types

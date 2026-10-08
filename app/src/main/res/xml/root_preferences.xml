@@ -52,6 +52,28 @@
 
     <PreferenceCategory
         app:layout="@layout/preference_category_material_card">
+
+        <SwitchPreferenceCompat
+            android:key="appTriggerEnabled"
+            android:title="@string/app_trigger_enabled_title"
+            android:summary="@string/app_trigger_enabled_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+        <MultiSelectListPreference
+            android:key="appTriggerPackages"
+            android:title="@string/app_trigger_packages_title"
+            android:summary="@string/app_trigger_packages_summary"
+            app:iconSpaceReserved="false" />
+        <Preference
+            android:key="appTriggerUsageAccess"
+            android:title="@string/app_trigger_usage_access_title"
+            android:summary="@string/app_trigger_usage_access_summary"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:layout="@layout/preference_category_material_card">
         <Preference
             android:title="See docs for more info on these settings"
             android:summary=""
